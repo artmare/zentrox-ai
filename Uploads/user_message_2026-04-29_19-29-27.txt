@@ -1,0 +1,55 @@
+## Task Information
+**Task Name:** Video Content AI Agent
+**Description:** AI-автопилот ежедневной генерации видео-контента: анализ ниш, трендов, генерация сценариев (5 сцен + хуки), визуал, субтитры, монетизация, адаптация TikTok/YouTube Shorts, самообучение.
+
+## Execution Plan
+**Goal:** Ежедневно запускать полный AI-автопилот генерации видео-контента: для каждого пользователя с autopilot_enabled=true выполнить 13 блоков — анализ ниши, монетизация, тренды, генерация сценариев (5 сцен с хуками, визуалом, субтитрами), адаптация TikTok/YouTube Shorts, очередь публикаций, анти-бан, стратегия роста, аналитика и самообучение AI. Результаты сохраняются в PostgreSQL БД и JSON-отчёты.
+
+### Steps
+**Step 1:** Загрузить переменные окружения из /home/ubuntu/shared/.env (DATABASE_URL, HOSTED_DATABASE_ID). Убедиться что ABACUS_API_KEY доступен для Abacus AI SDK. Создать директорию логов /home/ubuntu/video_automation_system/logs/ если не существует.
+Uses:
+- /home/ubuntu/shared/.env (Переменные окружения: DATABASE_URL, HOSTED_DATABASE_ID для PostgreSQL)
+
+**Step 2:** Установить зависимости если не установлены: pip install psycopg2-binary abacusai. Затем выполнить Python-скрипт командой: python3 /home/ubuntu/shared/run_daily_generation.py. Скрипт автоматически выполняет полный цикл AI-агента: подключается к PostgreSQL, находит всех пользователей с autopilot_enabled=true в user_settings, и для каждого выполняет 13 блоков:
+
+БЛОК 1: Анализ ниши (аудитория, боли, конкуренты, вирусный потенциал) → сохраняет в niche_analysis
+БЛОК 2: Встраивание монетизации (партнёрки, CTA, продукты) в сценарии
+БЛОК 3: Анализ трендов YouTube/TikTok (хуки, структура, паттерны) → сохраняет в trends
+БЛОК 4: Генерация сценариев (5 вариантов хуков → лучший, 5 сцен: хук→завязка→усиление→кульминация→CTA)
+БЛОК 5: Визуальные инструкции (cinematic стиль, камера, смена каждые 2-3с)
+БЛОК 6: Субтитры (короткие, CAPS ключевые слова, синхронные тайминги)
+БЛОК 7: Полный автономный цикл AI-агента
+БЛОК 8: Адаптация: TikTok (агрессивный, быстрый) vs YouTube Shorts (ценность, удержание)
+БЛОК 9: Очередь публикаций с расписанием → сохраняет в publications
+БЛОК 10: Анти-бан (прокси, задержки, лимиты)
+БЛОК 11: Стратегия роста (testing→scaling→serial)
+БЛОК 12: Аналитика (views, retention, CTR) → video_analytics
+БЛОК 13: Самообучение (усиление успешных паттернов) → strategy_logs
+
+Генерация контента через Abacus AI LLM (CLAUDE_V3_5_SONNET). При ошибке для одного пользователя — продолжает для остальных.
+Uses:
+- /home/ubuntu/shared/run_daily_generation.py (Главный Python-скрипт AI-агента: полный цикл генерации контента (13 блоков) для всех активных пользователей)
+
+**Step 3:** После завершения скрипта проверить код завершения и наличие JSON-отчёта в /home/ubuntu/video_automation_system/logs/. Отчёт содержит: время запуска/завершения, количество обработанных пользователей, успешных генераций, ошибок, и детали по каждому пользователю. Если скрипт завершился с ошибкой — сохранить логи для диагностики. Не изменять схему БД или исходный код приложения.
+
+
+## Output Files
+- /home/ubuntu/video_automation_system/logs ()
+
+## File Metadata
+
+**Path:** /home/ubuntu/shared/.env
+**Description:** Переменные окружения: DATABASE_URL, HOSTED_DATABASE_ID для PostgreSQL
+**Type:** config
+**Format:** env
+
+**Path:** /home/ubuntu/shared/db/schema.sql
+**Description:** Полная схема PostgreSQL: users, user_settings, video_scripts, trends, niche_analysis, generated_videos, video_analytics, strategy_logs, publications
+**Type:** data
+**Format:** sql
+
+**Path:** /home/ubuntu/shared/run_daily_generation.py
+**Description:** Главный Python-скрипт AI-агента: полный цикл генерации контента (13 блоков) для всех активных пользователей
+**Type:** script
+**Format:** python
+**Dependencies:** psycopg2-binary, abacusai

@@ -1,0 +1,262 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String             @id @default(cuid())
+  name             String?
+  email            String             @unique
+  emailVerified    DateTime?          @map("email_verified")
+  image            String?
+  passwordHash     String?            @map("password_hash")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+  settings         UserSettings?
+  videoScripts     VideoScript[]
+  generatedVideos  GeneratedVideo[]
+  nicheAnalyses    NicheAnalysis[]
+  publications     Publication[]
+  strategyLogs     StrategyLog[]
+  videoAnalytics   VideoAnalytic[]
+  socialAccounts   SocialAccount[]
+  accounts         Account[]
+  sessions         Session[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model UserSettings {
+  id                   String   @id @default(cuid())
+  userId               String   @unique @map("user_id")
+  platforms            Json     @default("[]")
+  niche                String   @default("motivation")
+  language             String   @default("russian")
+  videosPerDay         Int      @default(5) @map("videos_per_day")
+  monetizationSettings Json?    @map("monetization_settings")
+  autopilotEnabled     Boolean  @default(false) @map("autopilot_enabled")
+  scheduleTime         String   @default("09:00") @map("schedule_time")
+  contentStrategy      String   @default("mixed") @map("content_strategy")
+  growthPhase          String?  @default("testing") @map("growth_phase")
+  proxyConfig          Json?    @default("{}") @map("proxy_config")
+  accountWarmupDone    Boolean? @default(false) @map("account_warmup_done")
+  tiktokCredentials    Json?    @default("{}") @map("tiktok_credentials")
+  youtubeCredentials   Json?    @default("{}") @map("youtube_credentials")
+  dailyPostLimit       Int?     @default(3) @map("daily_post_limit")
+  selfLearningEnabled  Boolean  @default(true) @map("self_learning_enabled")
+  postingConfig        Json?    @map("posting_config")
+  antiBanConfig        Json?    @map("anti_ban_config")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+model VideoScript {
+  id                      String          @id @default(cuid())
+  userId                  String          @map("user_id")
+  platform                String
+  title                   String
+  hook                    String
+  contentType             String          @map("content_type")
+  emotion                 String          @default("inspiring")
+  fullScript              Json            @map("full_script")
+  status                  String          @default("draft")
+  monetizationCta         String?         @default("") @map("monetization_cta")
+  subtitles               Json?           @default("[]") 
+  visualStyle             Json?           @default("{}") @map("visual_style")
+  publishingInstructions  Json?           @default("{}") @map("publishing_instructions")
+  score                   Float?          @default(0)
+  createdAt               DateTime        @default(now()) @map("created_at")
+  updatedAt               DateTime        @updatedAt @map("updated_at")
+  user                    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  generatedVideos         GeneratedVideo[]
+  videoAnalytics          VideoAnalytic[]
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("video_scripts")
+}
+
+model Trend {
+  id             String   @id @default(cuid())
+  platform       String
+  videoUrl       String?  @map("video_url")
+  title          String
+  hookType       String   @map("hook_type")
+  emotion        String
+  views          Int      @default(0)
+  engagementRate Float    @default(0) @map("engagement_rate")
+  analyzedAt     DateTime @default(now()) @map("analyzed_at")
+
+  @@index([platform])
+  @@map("trends")
+}
+
+model GeneratedVideo {
+  id               String        @id
+  scriptId         String?       @map("script_id")
+  userId           String?       @map("user_id")
+  platform         String
+  videoPath        String?       @map("video_path")
+  audioPath        String?       @map("audio_path")
+  subtitlesPath    String?       @map("subtitles_path")
+  thumbnailPath    String?       @map("thumbnail_path")
+  durationSeconds  Float?        @default(0) @map("duration_seconds")
+  resolution       String?       @default("1080x1920")
+  status           String?       @default("pending")
+  publishedUrl     String?       @map("published_url")
+  publishedAt      DateTime?     @map("published_at")
+  generationLog    Json?         @default("{}") @map("generation_log")
+  createdAt        DateTime?     @default(now()) @map("created_at")
+  script           VideoScript?  @relation(fields: [scriptId], references: [id], onDelete: Cascade)
+  user             User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publications     Publication[]
+
+  @@index([status], map: "idx_generated_videos_status")
+  @@index([userId], map: "idx_generated_videos_user")
+  @@map("generated_videos")
+}
+
+model NicheAnalysis {
+  id                  String    @id
+  userId              String?   @map("user_id")
+  niche               String
+  audienceProfile     Json?     @default("{}") @map("audience_profile")
+  painPoints          Json?     @default("[]") @map("pain_points")
+  viralPotential      Float?    @default(0) @map("viral_potential")
+  monetizationMethods Json?     @default("[]") @map("monetization_methods")
+  competitorAnalysis  Json?     @default("{}") @map("competitor_analysis")
+  createdAt           DateTime? @default(now()) @map("created_at")
+  user                User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "idx_niche_analysis_user")
+  @@map("niche_analysis")
+}
+
+model SocialAccount {
+  id            String          @id @default(cuid())
+  userId        String          @map("user_id")
+  platform      String
+  accountName   String          @map("account_name")
+  username      String          @default("")
+  credentials   Json            @default("{}")
+  proxyUrl      String?         @map("proxy_url")
+  isActive      Boolean         @default(true) @map("is_active")
+  isWarmedUp    Boolean         @default(false) @map("is_warmed_up")
+  lastPostedAt  DateTime?       @map("last_posted_at")
+  postsToday    Int             @default(0) @map("posts_today")
+  dailyLimit    Int             @default(3) @map("daily_limit")
+  notes         String?
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publications  Publication[]
+
+  @@index([userId], map: "idx_social_accounts_user")
+  @@map("social_accounts")
+}
+
+model Publication {
+  id            String          @id
+  videoId       String?         @map("video_id")
+  userId        String?         @map("user_id")
+  accountId     String?         @map("account_id")
+  platform      String
+  externalId    String?         @map("external_id")
+  url           String?
+  status        String?         @default("scheduled")
+  scheduledAt   DateTime?       @map("scheduled_at")
+  publishedAt   DateTime?       @map("published_at")
+  caption       String?
+  hashtags      Json?           @default("[]")
+  errorLog      String?         @map("error_log")
+  createdAt     DateTime?       @default(now()) @map("created_at")
+  user          User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video         GeneratedVideo? @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  account       SocialAccount?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  @@index([status], map: "idx_publications_status")
+  @@index([userId], map: "idx_publications_user")
+  @@map("publications")
+}
+
+model StrategyLog {
+  id              String    @id
+  userId          String?   @map("user_id")
+  strategyType    String    @map("strategy_type")
+  analysis        Json?     @default("{}") 
+  recommendations Json?     @default("[]") 
+  applied         Boolean?  @default(false)
+  growthPhase     String?   @default("testing") @map("growth_phase")
+  createdAt       DateTime? @default(now()) @map("created_at")
+  user            User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "idx_strategy_logs_user")
+  @@map("strategy_logs")
+}
+
+model VideoAnalytic {
+  id                String       @id
+  scriptId          String?      @map("script_id")
+  userId            String?      @map("user_id")
+  platform          String
+  views             Int?         @default(0)
+  likes             Int?         @default(0)
+  comments          Int?         @default(0)
+  shares            Int?         @default(0)
+  watchTimeSeconds  Float?       @default(0) @map("watch_time_seconds")
+  retentionRate     Float?       @default(0) @map("retention_rate")
+  ctr               Float?       @default(0)
+  engagementRate    Float?       @default(0) @map("engagement_rate")
+  collectedAt       DateTime?    @default(now()) @map("collected_at")
+  script            VideoScript? @relation(fields: [scriptId], references: [id], onDelete: Cascade)
+  user              User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([scriptId], map: "idx_video_analytics_script")
+  @@index([userId], map: "idx_video_analytics_user")
+  @@map("video_analytics")
+}

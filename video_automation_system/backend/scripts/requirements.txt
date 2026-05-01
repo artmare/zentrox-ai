@@ -1,0 +1,40 @@
+# AI Content Generator - Python Dependencies
+
+# YouTube Data API
+google-api-python-client==2.108.0
+google-auth==2.25.2
+google-auth-oauthlib==1.2.0
+google-auth-httplib2==0.2.0
+
+# Abacus AI SDK
+abacusai>=3.0.0
+
+# Database (PostgreSQL)
+psycopg2-binary==2.9.9
+
+# HTTP Requests
+requests==2.31.0
+urllib3==2.1.0
+
+# JSON & Data Processing
+python-dateutil==2.8.2
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Logging (Enhanced)
+colorlog==6.8.0
+
+# Testing (Optional)
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+
+# Development Tools (Optional)
+black==23.12.1
+flake8==7.0.0
+mypy==1.8.0
+
+# Additional Utilities
+tenacity==8.2.3  # Retry mechanisms
+pydantic==2.5.3  # Data validation
